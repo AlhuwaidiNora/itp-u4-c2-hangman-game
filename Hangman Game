@@ -1,0 +1,95 @@
+import random
+
+def mask_word(word):
+    """
+    Masks the input word with asterisks.
+    """
+    return '*' * len(word)
+
+def uncover_word(answer_word, masked_word, letter):
+    """
+    Uncovers parts of the masked word based on the guessed letter.
+    """
+    if len(letter) != 1 or not letter.isalpha():
+        raise ValueError("Please enter a single alphabetical character as guess.")
+
+    if letter.lower() in answer_word.lower():
+        new_masked_word = []
+        for idx, char in enumerate(answer_word):
+            if char.lower() == letter.lower():
+                new_masked_word.append(letter.lower())
+            else:
+                new_masked_word.append(masked_word[idx])
+        return ''.join(new_masked_word)
+    else:
+        return masked_word
+
+def get_random_word(words):
+    """
+    Picks a random word from a list of words.
+    """
+    return random.choice(words)
+
+def guess(game, letter):
+    """
+    Manages the guessing process in the game.
+    """
+    if game['remaining_misses'] == 0 or game['masked_word'] == game['answer_word']:
+        raise ValueError("Game already over!")
+
+    if letter.lower() in game['previous_guesses']:
+        raise ValueError("You have already guessed this letter!")
+
+    game['previous_guesses'].append(letter.lower())
+
+    if letter.lower() in game['answer_word'].lower():
+        game['masked_word'] = uncover_word(game['answer_word'], game['masked_word'], letter)
+    else:
+        game['remaining_misses'] -= 1
+
+    if game['masked_word'] == game['answer_word']:
+        game['status'] = 'win'
+    elif game['remaining_misses'] == 0:
+        game['status'] = 'lose'
+
+    return game
+
+def start_new_game(words):
+    """
+    Initializes a new game with a random word from a list.
+    """
+    answer_word = get_random_word(words)
+    masked_word = mask_word(answer_word)
+    game = {
+        'answer_word': answer_word,
+        'masked_word': masked_word,
+        'remaining_misses': 5,
+        'previous_guesses': [],
+        'status': 'active'
+    }
+    return game
+
+if __name__ == "__main__":
+    # List of words for the game
+    words = ['Python', 'Hangman', 'Game', 'Programming']
+
+    # Start a new game
+    game = start_new_game(words)
+    print(f"Welcome to Hangman! Try to guess the word.")
+    print(f"Masked Word: {game['masked_word']}")
+
+    while game['status'] == 'active':
+        guess_letter = input("Guess a letter: ")
+        try:
+            game = guess(game, guess_letter)
+            print(f"Masked Word: {game['masked_word']}")
+            print(f"Previous Guesses: {', '.join(game['previous_guesses'])}")
+            print(f"Remaining Misses: {game['remaining_misses']}")
+        except ValueError as ve:
+            print(str(ve))
+
+    if game['status'] == 'win':
+        print("Congratulations! You've won!")
+    else:
+        print("Game over. You've run out of guesses.")
+        print(f"The answer was: {game['answer_word']}")
